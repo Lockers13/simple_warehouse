@@ -1,7 +1,10 @@
 class SimpleWarehouse
   def initialize()
+    ### initialize an empty warehouse instance var
     @wh_grid = Array.new(0) { Array.new(0) }
+    ### initialize a list to keep track of crates
     @rect_list = []
+    ### initialize a hash to associate crates with product codes
     @prod_hash = Hash.new
     @row_count = 0
   end
@@ -12,8 +15,9 @@ class SimpleWarehouse
     while @live
       print '> '
       command = gets.chomp.split
+      # get base command
       command_base = command[0]
-
+      ### switch statement to decide which method to call based on command entered
       case command_base
         when 'help'
           show_help_message
@@ -46,6 +50,7 @@ class SimpleWarehouse
   end
 
   def locate(p_code)
+    ### check if product code is stored as key in product hash
     if @prod_hash.key?(p_code) && @prod_hash[p_code] != []
       p @prod_hash[p_code]
     else
@@ -54,11 +59,15 @@ class SimpleWarehouse
   end
 
   def remove(x, y)
+    ### in this function we loop through the list of stored crates 
+    ### and if a match is found we store the index for later removal
+    ### we also modify the visual representation of the warehouse grid accordingly
     idx = -1
     key = @wh_grid[x][y]
     @rect_list.each_with_index do |rect, index|
       valid = (rect[0] == x && rect[1] == y)
       if valid
+        ### visual mmodification of wh_grid
         w = rect[2]
         h = rect[3]
         (x..(x+h)-1).each do |i|
@@ -71,18 +80,18 @@ class SimpleWarehouse
       end
     end
     if(idx != -1)
+      ### removal of crate from list
       @rect_list.delete_at(idx)
       inner_list = @prod_hash[key]
-      idx = -1
       inner_list.each_with_index do |rect, index|
         valid = (rect[0] == x && rect[1] == y)
         if valid
           idx = index
         end
       end
-      if idx != -1
-        inner_list.delete_at(idx)
-      end
+      ### removal of crate from prod hash
+      ### note: if the idx of the crate was found in the crate list, it will also necessarily be found in the product hash
+      inner_list.delete_at(idx)
       puts "Crate successfully removed"
     else
       puts "Error: no such crate at specified origin"
@@ -106,7 +115,9 @@ class SimpleWarehouse
     else
       (x..(x+h)-1).each do |i|
         (y..(y+w)-1).each do |j|
+          ### this next line changes visual representation of wh_grid
           @wh_grid[i][j] = p
+          ### logic to add crates to product hash and to list of all crates
           if i == x and y == j
             if @prod_hash.key?(p)
               @prod_hash[p].append([x, y, w, h])
@@ -123,6 +134,7 @@ class SimpleWarehouse
   end
   
   def rec_intersection?(rect1, rect2)
+    ### utility function to determine if two rects overlap
     x_min = [rect1[0][0], rect2[0][0]].max
     x_max = [rect1[1][0], rect2[1][0]].min
     y_min = [rect1[0][1], rect2[0][1]].max
@@ -132,6 +144,7 @@ class SimpleWarehouse
   end
 
   def overlap?(x, y, w, h)
+    ### check if crates overlap (this method is called in store method above)
     store_rect = [[x, y], [x+h-1, y+w-1]] # x1, y1, x2, y2
     @rect_list.each do |rect|
       check_rect = [[rect[0], rect[1]], [rect[0] + rect[3]-1, rect[1] + rect[2]-1]] # x1, y1, x2, y2
@@ -143,12 +156,15 @@ class SimpleWarehouse
   end
 
   def init_wh(w, h)
+    ### method to initialize wh_grid with proper values. Note: confusing and inconsistent use of w and h
     rows, cols = w, h
     @row_count = w
     @wh_grid = Array.new(rows) { Array.new(cols, '*') }
   end
 
   def view
+    ### function to graphically display wh_grid from bottom up
+    ### we just start from the bottom row up, logically the internal representation of wh_grid is the same
     row_c = @row_count - 1
     @wh_grid.each_with_index do |row, i|
       row.each_with_index do |column, j|
